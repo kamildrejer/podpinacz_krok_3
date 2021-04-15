@@ -45,6 +45,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFile)
 import processing
 import sys
+import ast
 
 
 class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
@@ -71,7 +72,7 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
-        with some other properties.  
+        with some other properties.
         """
 
         # We add the input vector features source. It can have any kind of
@@ -161,17 +162,14 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
         outputs = {}
 
 
-
-        print(parameters['opcje'])
-
         # Zmień pola
         if parameters['opcje'] == 1:
             fieldmap = []
-            infile = open(parameters['plik_loadmap'],'r')
-            for line in infile:
-                fieldmap.append(line.strip().split(','))
+            with open(parameters['plik_loadmap'],'r') as inFile:
+                fieldmap = ast.literal_eval(inFile.read())
+            print(fieldmap[4])
 
-            infile.close()
+            # inFile.close()
             alg_params = {
                 'FIELDS_MAPPING': fieldmap,
                 'INPUT': parameters['wejscie'],
@@ -188,15 +186,15 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
                 'FIELDS_MAPPING': [
                     {'expression': '\"id\"','length': 6,'name': 'id.','precision': 0,'type': 2},
                     {'expression': '\"data\"','length': 10,'name': 'data','precision': 0,'type': 14},
-                    {'expression': '\"obserwator\"','length': 200,'name': 'obserwator','precision': 0,'type': 10},
-                    {'expression': '\"Slowniki_spakr\"','length': 15,'name': 'akronim','precision': 0,'type': 10},
+                    {'expression': '\"im_naz\"','length': 200,'name': 'im_naz','precision': 0,'type': 10},
+                    {'expression': '\"Slowniki_spakr\"','length': 15,'name': 'akr','precision': 0,'type': 10},
                     {'expression': '\"Slowniki_spopol\"','length': 254,'name': 'naz_pl','precision': 0,'type': 10},
                     {'expression': '\"Slowniki_splac\"','length': 254,'name': 'naz_lac','precision': 0,'type': 10},
                     {'expression': '\"Slowniki_och\"','length': 100,'name': 'stat_ochr','precision': 0,'type': 10},
                     {'expression': '\"rodz_obs\"','length': 50,'name': 'rodz_obs','precision': 0,'type': 10},
                     {'expression': '\"liczba\"','length': 50,'name': 'liczebnosc','precision': 0,'type': 4},
-                    {'expression': '\"jednostki\"','length': 50,'name': 'jdn_lcz','precision': 0,'type': 10},
-                    {'expression': '\"uwagi\"','length': 254,'name': 'uwagi','precision': 0,'type': 10},
+                    {'expression': '\"jdn_lcz\"','length': 50,'name': 'jdn_lcz','precision': 0,'type': 10},
+                    {'expression': '\"uwagi_ost\"','length': 254,'name': 'uwagi','precision': 0,'type': 10},
                     {'expression': '\"foto\"','length': 254,'name': 'foto','precision': 0,'type': 10},
                     {'expression': '\"X_92\"','length': 10,'name': 'X_92','precision': 2,'type': 6},
                     {'expression': '\"Y_92\"','length': 10,'name': 'Y_92','precision': 2,'type': 6}
