@@ -188,7 +188,7 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
                     {'expression': '\"data\"','length': 10,'name': 'data','precision': 0,'type': 14},
                     {'expression': '\"im_naz\"','length': 200,'name': 'im_naz','precision': 0,'type': 10},
                     {'expression': '\"Slowniki_spakr\"','length': 15,'name': 'akr','precision': 0,'type': 10},
-                    {'expression': '\"Slowniki_spopol\"','length': 254,'name': 'naz_pl','precision': 0,'type': 10},
+                    {'expression': '\"Slowniki_sppol\"','length': 254,'name': 'naz_pl','precision': 0,'type': 10},
                     {'expression': '\"Slowniki_splac\"','length': 254,'name': 'naz_lac','precision': 0,'type': 10},
                     {'expression': '\"Slowniki_och\"','length': 100,'name': 'stat_ochr','precision': 0,'type': 10},
                     {'expression': '\"rodz_obs\"','length': 50,'name': 'rodz_obs','precision': 0,'type': 10},
