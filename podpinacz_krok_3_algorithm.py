@@ -42,7 +42,8 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterEnum,
-                       QgsProcessingParameterFile)
+                       QgsProcessingParameterFile,
+                       QgsProcessingParameterNumber)
 import processing
 import sys
 import ast
@@ -84,13 +85,24 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
                 defaultValue=None
             )
         )
+        self.addParameter(QgsProcessingParameterNumber(
+        'liczba',
+        'Od jakiej liczby numerować l.p.?',
+        type=QgsProcessingParameterNumber.Integer,
+        minValue=0,
+        defaultValue=1
+            )
+        )
 
         self.addParameter(QgsProcessingParameterEnum(
                 'opcje',
                 'opcje',
                 options=['Domyśla mapa pól',
                 'Wczytaj mapę pól z pliku',
-                'Utwórz mapę pól poniżej'],
+                'Utwórz mapę pól poniżej',
+                'CPK - stanowiska',
+                'CPK - siedliska',
+                ],
                 allowMultiple=False,
                 defaultValue=[]
             )
@@ -151,9 +163,6 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
             )
         )
 
-
-
-
     def processAlgorithm(self, parameters, context, model_feedback):
         # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
         # overall progress through the model
@@ -161,6 +170,17 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
         results = {}
         outputs = {}
 
+        # Kalkulator pól
+        alg_params = {
+            'FIELD_LENGTH': 4,
+            'FIELD_NAME': 'temp',
+            'FIELD_PRECISION': 0,
+            'FIELD_TYPE': 1,
+            'FORMULA': parameters['liczba'],
+            'INPUT': parameters['wejscie'],
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['KalkulatorPl'] = processing.run('native:fieldcalculator', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         # Zmień pola
         if parameters['opcje'] == 1:
@@ -172,15 +192,44 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
             # inFile.close()
             alg_params = {
                 'FIELDS_MAPPING': fieldmap,
-                'INPUT': parameters['wejscie'],
-                'OUTPUT': parameters['Wynik']
+                'INPUT': outputs['KalkulatorPl']['OUTPUT'],
+                'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
             }
         elif parameters['opcje'] == 2:
             alg_params = {
                 'FIELDS_MAPPING': parameters['mapapl'],
-                'INPUT': parameters['wejscie'],
-                'OUTPUT': parameters['Wynik']
+                'INPUT': outputs['KalkulatorPl']['OUTPUT'],
+                'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
             }
+
+        elif parameters['opcje'] == 3:
+            fieldmap = []
+            plik='G:\\Dyski współdzielone\\1_Public\\QGiS\\Slowniki_inwentarki\\mapa_pol_stanowiska.txt'
+            with open(plik,'r') as inFile:
+                fieldmap = ast.literal_eval(inFile.read())
+            print(fieldmap[4])
+
+            # inFile.close()
+            alg_params = {
+                'FIELDS_MAPPING': fieldmap,
+                'INPUT': outputs['KalkulatorPl']['OUTPUT'],
+                'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+            }
+
+        elif parameters['opcje'] == 4:
+            fieldmap = []
+            plik='G:\\Dyski współdzielone\\1_Public\\QGiS\\Slowniki_inwentarki\\mapa_pol_siedliska.txt'
+            with open(plik,'r') as inFile:
+                fieldmap = ast.literal_eval(inFile.read())
+            print(fieldmap[4])
+
+            # inFile.close()
+            alg_params = {
+                'FIELDS_MAPPING': fieldmap,
+                'INPUT': outputs['KalkulatorPl']['OUTPUT'],
+                'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+            }
+
         else:
             alg_params = {
                 'FIELDS_MAPPING': [
@@ -199,14 +248,23 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
                     {'expression': '\"X_92\"','length': 10,'name': 'X_92','precision': 2,'type': 6},
                     {'expression': '\"Y_92\"','length': 10,'name': 'Y_92','precision': 2,'type': 6}
                 ],
-            'INPUT': parameters['wejscie'],
-            'OUTPUT': parameters['Wynik']
+            'INPUT': outputs['KalkulatorPl']['OUTPUT'],
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
 
-
-
         outputs['ZmiePola'] = processing.run('native:refactorfields', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['Wynik'] = outputs['ZmiePola']['OUTPUT']
+
+        # Usuń pola
+        alg_params = {
+            'COLUMN': ['temp'],
+            'INPUT': outputs['ZmiePola']['OUTPUT'],
+            'OUTPUT': parameters['Wynik']
+        }
+        outputs['UsuPola'] = processing.run('qgis:deletecolumn', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+
+
+        results['Wynik'] = outputs['UsuPola']['OUTPUT']
 
         if parameters['czy_zapis_mapy'] == True:
         # Set the path for the output file
@@ -231,7 +289,7 @@ class PodpinaczKrok3Algorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Podpinacz krojk 3'
+        return 'Podpinacz krok 3'
 
     def displayName(self):
         """
